@@ -1,7 +1,7 @@
 var express = require("express");
 var router = express.Router();
 
-/* GET home page. */
+/* redirect to api route */
 router.get("/", function (req, res, next) {
   res.redirect("/api");
 });
