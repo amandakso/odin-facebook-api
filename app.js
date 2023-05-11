@@ -10,6 +10,15 @@ var apiRouter = require("./routes/api");
 
 var app = express();
 
+// Set up mongoose connection
+const mongoose = require("mongoose");
+const mongoDB = process.env.MONGODB_URL;
+mongoose
+  .connect(mongoDB, { useNewUrlParser: true, useUnifiedTopology: true })
+  .catch((err) => console.log(err));
+const db = mongoose.connection;
+db.on("error", console.error.bind(console, "MongoDB connection error:"));
+
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
