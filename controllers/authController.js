@@ -1,6 +1,9 @@
 const { body, validationResult } = require("express-validator");
-
+const passport = require("../middleware/passportauth");
+const jwt = require("jsonwebtoken");
 const User = require("../models/user");
+
+require("dotenv").config();
 
 exports.signup = [
   // validate and sanitize fields
@@ -60,8 +63,28 @@ exports.signup = [
   },
 ];
 
-exports.login = (req, res, next) => {
-  res.send("TBD");
+exports.login = async (req, res, next) => {
+  passport.authenticate("login", async (err, user, info) => {
+    try {
+      if (err || !user) {
+        const error = new Error("An error occurred.");
+        return next(error);
+      }
+
+      req.login(user, { session: false }, async (error) => {
+        if (error) return next(error);
+
+        const body = { _id: user._id, username: user.username };
+        const token = jwt.sign({ user: body }, process.env.jwt_key, {
+          expiresIn: "1hr",
+        });
+
+        return res.json({ token });
+      });
+    } catch (error) {
+      return next(error);
+    }
+  })(req, res, next);
 };
 exports.logout = (req, res, next) => {
   res.send("TBD");
