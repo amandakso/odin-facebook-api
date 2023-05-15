@@ -87,5 +87,12 @@ exports.login = async (req, res, next) => {
   })(req, res, next);
 };
 exports.logout = (req, res, next) => {
-  res.send("TBD");
+  const authHeader = req.headers["authorization"];
+  jwt.sign(authHeader, "", { expiresIn: 1 }, (logout, err) => {
+    if (logout) {
+      res.json({ msg: "You have been logged out" });
+    } else {
+      res.json({ msg: err.message });
+    }
+  });
 };
