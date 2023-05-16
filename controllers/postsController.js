@@ -16,13 +16,29 @@ exports.get_posts = (req, res, next) => {
         }
         return res.json(list_posts);
       } catch (error) {
-        return next(err);
+        return next(error);
       }
     });
 };
 
 exports.get_post = (req, res, next) => {
-  res.send("TBD");
+  let isValid = validateObjectId(req.params.postid);
+  if (!isValid) {
+    return next();
+  }
+  Post.findById(req.params.postid)
+    .select("author text createdAt updatedAt")
+    .populate("author", "username")
+    .then((list_post, err) => {
+      try {
+        if (err) {
+          return next(err);
+        }
+        return res.json(list_post);
+      } catch (error) {
+        return next(error);
+      }
+    });
 };
 
 exports.create_post = (req, res, next) => {
