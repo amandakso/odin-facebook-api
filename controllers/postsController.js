@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const Likes = require("../models/likes");
 const Post = require("../models/post");
 const { body, validationResult } = require("express-validator");
 const jwt = require("jsonwebtoken");
@@ -157,10 +158,32 @@ exports.edit_post = [
 
 exports.delete_post = (req, res, next) => {
   res.send("TBD");
+  // have to delete comments and likes too
 };
 
 exports.get_likes = (req, res, next) => {
-  res.send("TBD");
+  let isValid = validateObjectId(req.params.postid);
+  if (!isValid) {
+    const error = new Error("Unable to find post.");
+    console.log("test");
+    return next(error);
+  }
+  Likes.findOne({ postid: req.params.postid })
+    .populate("user", "username")
+    .then((list_likes, err) => {
+      try {
+        console.log("test2");
+        if (err) {
+          console.log("test3");
+          return next(err);
+        }
+        console.log(list_likes);
+        return res.json(list_likes);
+      } catch (error) {
+        console.log("test 5");
+        return next(error);
+      }
+    });
 };
 
 exports.like_post = (req, res, next) => {
