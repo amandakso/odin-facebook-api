@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const Comment = require("../models/comment");
 const Likes = require("../models/likes");
 const Post = require("../models/post");
 const { body, validationResult } = require("express-validator");
@@ -269,7 +270,24 @@ exports.unlike_post = (req, res, next) => {
 };
 
 exports.get_comments = (req, res, next) => {
-  res.send("TBD");
+  let isValid = validateObjectId(req.params.postid);
+  if (!isValid) {
+    const error = new Error("Post not found");
+    return next(error);
+  }
+  Comment.find({ postid: req.params.postid })
+    .sort({ createdAt: -1 })
+    .populate("author", "username")
+    .then((list_comments, err) => {
+      try {
+        if (err) {
+          return next(err);
+        }
+        return res.json(list_comments);
+      } catch (error) {
+        return next(error);
+      }
+    });
 };
 
 exports.get_comment = (req, res, next) => {
