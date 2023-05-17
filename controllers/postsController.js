@@ -224,9 +224,48 @@ exports.like_post = (req, res, next) => {
     });
   });
 };
-
 exports.unlike_post = (req, res, next) => {
-  res.send("TBD");
+  let isValid = validateObjectId(req.params.postid);
+  if (!isValid) {
+    const error = new Error("Unable to find post.");
+    return next(error);
+  }
+
+  // Check that post exists
+  Post.findById(req.params.postid).then((result, err) => {
+    if (err) {
+      return next(err);
+    }
+    if (!result) {
+      const error = new Error("Post not found. Unable to unlike post.");
+      return next(error);
+    }
+    // Extract bearer token
+    let bearerToken = "";
+    const bearerHeader = req.headers.authorization;
+    bearerToken = extractBearerToken(bearerHeader);
+
+    // Verify Token
+    jwt.verify(bearerToken, process.env.jwt_key, (err, authData) => {
+      if (err) {
+        return next(err);
+      }
+
+      Likes.findOneAndUpdate(
+        { postid: req.params.postid },
+        { $pull: { users: authData.user._id } },
+        { new: true }
+      ).then((result, err) => {
+        if (err) {
+          return next(err);
+        }
+        return res.json({
+          message: "User unliked post.",
+          data: result,
+        });
+      });
+    });
+  });
 };
 
 exports.get_comments = (req, res, next) => {
