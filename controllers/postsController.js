@@ -312,9 +312,69 @@ exports.get_comment = (req, res, next) => {
     });
 };
 
-exports.create_comment = (req, res, next) => {
-  res.send("TBD");
-};
+exports.create_comment = [
+  // Validate and sanitize fields
+  body("text", "Post exceeds character limit.")
+    .trim()
+    .isLength({ max: 500 })
+    .escape(),
+
+  // Process request after validation and sanitization
+  (req, res, next) => {
+    // Extract the validation errors from a request
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      // Errors exist. Send json with error messages
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    // Check if post id is valid
+
+    let isValid = validateObjectId(req.params.postid);
+
+    if (!isValid) {
+      const error = new Error("Post not found");
+      return next(error);
+    }
+    // Check that post exists
+    Post.findById(req.params.postid).then((result, err) => {
+      if (err) {
+        return next(err);
+      }
+      if (!result) {
+        const error = new Error("Post not found. Unable to comment on post.");
+        return next(error);
+      }
+      // Extract bearer token
+      let bearerToken = "";
+      const bearerHeader = req.headers.authorization;
+      bearerToken = extractBearerToken(bearerHeader);
+
+      // Verify Token
+      jwt.verify(bearerToken, process.env.jwt_key, (err, authData) => {
+        if (err) {
+          return next(err);
+        }
+        const comment = new Comment({
+          postid: req.params.postid,
+          author: authData.user._id,
+          text: req.body.text,
+        })
+          .save()
+          .then(() => {
+            return res.json({
+              message: "New comment created",
+              data: authData,
+            });
+          })
+          .catch((err) => {
+            return res.json({ error: err.message });
+          });
+      });
+    });
+  },
+];
 
 exports.update_comment = (req, res, next) => {
   res.send("TBD");
