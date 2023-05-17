@@ -168,13 +168,12 @@ exports.get_likes = (req, res, next) => {
     return next(error);
   }
   Likes.findOne({ postid: req.params.postid })
-    .populate("user", "username")
+    .populate("users", "username")
     .then((list_likes, err) => {
       try {
         if (err) {
           return next(err);
         }
-        console.log(list_likes);
         return res.json(list_likes);
       } catch (error) {
         return next(error);
