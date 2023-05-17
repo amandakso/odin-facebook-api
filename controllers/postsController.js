@@ -225,6 +225,7 @@ exports.like_post = (req, res, next) => {
     });
   });
 };
+
 exports.unlike_post = (req, res, next) => {
   let isValid = validateObjectId(req.params.postid);
   if (!isValid) {
@@ -291,7 +292,24 @@ exports.get_comments = (req, res, next) => {
 };
 
 exports.get_comment = (req, res, next) => {
-  res.send("TBD");
+  let isValid = validateObjectId(req.params.commentid);
+  if (!isValid) {
+    const error = new Error("Invalid entry.");
+    return next(error);
+  }
+  Comment.findById(req.params.commentid)
+    .select("author text createdAt updatedAt")
+    .populate("author", "username")
+    .then((list_comment, err) => {
+      try {
+        if (err) {
+          return next(err);
+        }
+        return res.json(list_comment);
+      } catch (error) {
+        return next(error);
+      }
+    });
 };
 
 exports.create_comment = (req, res, next) => {
