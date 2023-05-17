@@ -165,29 +165,65 @@ exports.get_likes = (req, res, next) => {
   let isValid = validateObjectId(req.params.postid);
   if (!isValid) {
     const error = new Error("Unable to find post.");
-    console.log("test");
     return next(error);
   }
   Likes.findOne({ postid: req.params.postid })
     .populate("user", "username")
     .then((list_likes, err) => {
       try {
-        console.log("test2");
         if (err) {
-          console.log("test3");
           return next(err);
         }
         console.log(list_likes);
         return res.json(list_likes);
       } catch (error) {
-        console.log("test 5");
         return next(error);
       }
     });
 };
 
 exports.like_post = (req, res, next) => {
-  res.send("TBD");
+  let isValid = validateObjectId(req.params.postid);
+  if (!isValid) {
+    const error = new Error("Unable to find post.");
+    return next(error);
+  }
+
+  // Check that post exists
+  Post.findById(req.params.postid).then((result, err) => {
+    if (err) {
+      return next(err);
+    }
+    if (!result) {
+      const error = new Error("Post not found. Unable to like post.");
+      return next(error);
+    }
+    // Extract bearer token
+    let bearerToken = "";
+    const bearerHeader = req.headers.authorization;
+    bearerToken = extractBearerToken(bearerHeader);
+
+    // Verify Token
+    jwt.verify(bearerToken, process.env.jwt_key, (err, authData) => {
+      if (err) {
+        return next(err);
+      }
+
+      Likes.findOneAndUpdate(
+        { postid: req.params.postid },
+        { $addToSet: { users: authData.user._id } }, // doesn't add user if already in array
+        { new: true, upsert: true }
+      ).then((result, err) => {
+        if (err) {
+          return next(err);
+        }
+        return res.json({
+          message: "User liked post.",
+          data: result,
+        });
+      });
+    });
+  });
 };
 
 exports.unlike_post = (req, res, next) => {
