@@ -314,7 +314,7 @@ exports.get_comment = (req, res, next) => {
 
 exports.create_comment = [
   // Validate and sanitize fields
-  body("text", "Post exceeds character limit.")
+  body("text", "Comment exceeds character limit.")
     .trim()
     .isLength({ max: 500 })
     .escape(),
@@ -376,9 +376,72 @@ exports.create_comment = [
   },
 ];
 
-exports.update_comment = (req, res, next) => {
-  res.send("TBD");
-};
+exports.update_comment = [
+  // Validate and sanitize fields
+  body("text", "Comment exceeds character limit.")
+    .trim()
+    .isLength({ max: 500 })
+    .escape(),
+
+  // Process request after validation and sanitization
+  (req, res, next) => {
+    // Extract the validation errors from a request
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      // Errors exist. Send json with error messages
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    // Check that comment exists
+    let isValid = validateObjectId(req.params.commentid);
+    if (!isValid) {
+      const error = new Error("Unable to update comment.");
+      return next(error);
+    }
+    Comment.findById(req.params.commentid)
+      .select("author")
+      .then((result, err) => {
+        if (err) {
+          return next(err);
+        }
+        if (!result) {
+          const error = new Error(
+            "Comment not found. Unable to update comment."
+          );
+          return next(error);
+        }
+        // Extract bearer token
+        let bearerToken = "";
+        const bearerHeader = req.headers.authorization;
+        bearerToken = extractBearerToken(bearerHeader);
+
+        // Verify Token
+        jwt.verify(bearerToken, process.env.jwt_key, (err, authData) => {
+          if (err) {
+            return next(err);
+          }
+          // current user id doesn't match comment author id
+          if (authData.user._id !== result.author.toString()) {
+            const error = new Error("Not authorized.");
+            return next(error);
+          }
+
+          Comment.findByIdAndUpdate(req.params.commentid, {
+            text: req.body.text,
+          }).then((result, err) => {
+            if (err) {
+              return next(err);
+            }
+            return res.json({
+              message: "Comment updated",
+              data: result,
+            });
+          });
+        });
+      });
+  },
+];
 
 exports.delete_comment = (req, res, next) => {
   res.send("TBD");
