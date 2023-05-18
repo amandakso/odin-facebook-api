@@ -444,7 +444,50 @@ exports.update_comment = [
 ];
 
 exports.delete_comment = (req, res, next) => {
-  res.send("TBD");
+  // Check if comment id is valid
+
+  let isValid = validateObjectId(req.params.commentid);
+
+  if (!isValid) {
+    const error = new Error("Comment not found");
+    return next(error);
+  }
+  Comment.findById(req.params.commentid)
+    .select("author")
+    .then((result, err) => {
+      if (err) {
+        return next(err);
+      }
+      if (!result) {
+        const error = new Error("Comment not found. Unable to update comment.");
+        return next(error);
+      }
+      // Extract bearer token
+      let bearerToken = "";
+      const bearerHeader = req.headers.authorization;
+      bearerToken = extractBearerToken(bearerHeader);
+
+      // Verify Token
+      jwt.verify(bearerToken, process.env.jwt_key, (err, authData) => {
+        if (err) {
+          return next(err);
+        }
+        // current user id doesn't match comment author id
+        if (authData.user._id !== result.author.toString()) {
+          const error = new Error("Not authorized.");
+          return next(error);
+        }
+
+        Comment.findByIdAndDelete(req.params.commentid).then((result, err) => {
+          if (err) {
+            return next(err);
+          }
+          return res.json({
+            message: "Comment deleted",
+          });
+        });
+      });
+    });
 };
 
 function validateObjectId(id) {
