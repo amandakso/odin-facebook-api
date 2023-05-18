@@ -453,8 +453,11 @@ exports.delete_comment = (req, res, next) => {
     return next(error);
   }
   Comment.findById(req.params.commentid)
-    .select("author")
+    .select("author postid")
+    .lean("author")
+    .populate("postid", "author")
     .then((result, err) => {
+      console.log(result);
       if (err) {
         return next(err);
       }
@@ -472,8 +475,11 @@ exports.delete_comment = (req, res, next) => {
         if (err) {
           return next(err);
         }
-        // current user id doesn't match comment author id
-        if (authData.user._id !== result.author.toString()) {
+        // current user id doesn't match comment author id and doesn't match post author id
+        if (
+          authData.user._id !== result.author.toString() &&
+          authData.user.id !== result.postid.author
+        ) {
           const error = new Error("Not authorized.");
           return next(error);
         }
