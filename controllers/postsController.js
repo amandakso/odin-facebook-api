@@ -158,8 +158,49 @@ exports.edit_post = [
 ];
 
 exports.delete_post = (req, res, next) => {
-  res.send("TBD");
-  // have to delete comments and likes too
+  // Check that post exists
+  let isValid = validateObjectId(req.params.postid);
+  if (!isValid) {
+    const error = new Error("Unable to delete post.");
+    return next(error);
+  }
+  Post.findById(req.params.postid)
+    .select("author")
+    .then((result, err) => {
+      if (err) {
+        return next(err);
+      }
+      if (!result) {
+        const error = new Error("Post not found. Unable to delete post.");
+        return next(error);
+      }
+      // Extract bearer token
+      let bearerToken = "";
+      const bearerHeader = req.headers.authorization;
+      bearerToken = extractBearerToken(bearerHeader);
+
+      // Verify Token
+      jwt.verify(bearerToken, process.env.jwt_key, (err, authData) => {
+        if (err) {
+          return next(err);
+        }
+        // current user id doesn't match post author id
+        if (authData.user._id !== result.author.toString()) {
+          const error = new Error("Not authorized.");
+          return next(error);
+        }
+
+        Post.findByIdAndDelete(req.params.postid).then((result, err) => {
+          if (err) {
+            return next(err);
+          }
+          return res.json({
+            message: "Post deleted",
+            data: result,
+          });
+        });
+      });
+    });
 };
 
 exports.get_likes = (req, res, next) => {
