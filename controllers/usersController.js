@@ -12,7 +12,6 @@ exports.get_profile = (req, res, next) => {
     .select("username photo bio friends")
     .populate("friends")
     .then((profile, err) => {
-      console.log(profile);
       try {
         if (err) {
           return next(err);
@@ -25,7 +24,24 @@ exports.get_profile = (req, res, next) => {
 };
 
 exports.get_friends = (req, res, next) => {
-  res.send("TBD");
+  let isValid = validateObjectId(req.params.userid);
+  if (!isValid) {
+    const error = new Error("User not found.");
+    return next(error);
+  }
+  User.findById(req.params.userid)
+    .select("friends")
+    .populate("friends")
+    .then((list_friends, err) => {
+      try {
+        if (err) {
+          return next(err);
+        }
+        return res.json(list_friends);
+      } catch (error) {
+        return next(error);
+      }
+    });
 };
 
 exports.add_friend = (req, res, next) => {
