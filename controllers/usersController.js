@@ -66,7 +66,7 @@ exports.add_friend = (req, res, next) => {
     if (err) {
       return next(err);
     }
-    // current user id doesn't match comment author id
+    // current user id is the same as requested friend id
     if (authData.user._id === req.params.userid) {
       const error = new Error("Can't befriend self");
       return next(error);
@@ -109,6 +109,7 @@ exports.add_friend = (req, res, next) => {
       return next(err);
     }
     try {
+      // pending friend request from requested user
       Friend.findOneAndUpdate(
         {
           requester: req.params.userid,
@@ -135,6 +136,70 @@ exports.add_friend = (req, res, next) => {
     return res.json({
       message: "Friend request sent.",
     });
+  });
+};
+
+exports.accept_friend = (req, res, next) => {
+  // Check that userid is in valid form
+  let isValid = validateObjectId(req.params.userid);
+  if (!isValid) {
+    const error = new Error("User not found.");
+    return next(error);
+  }
+
+  // Extract bearer token
+  let bearerToken = "";
+  const bearerHeader = req.headers.authorization;
+  bearerToken = extractBearerToken(bearerHeader);
+
+  // Verify Token
+  jwt.verify(bearerToken, process.env.jwt_key, async (err, authData) => {
+    if (err) {
+      return next(err);
+    }
+
+    try {
+      // find friend request and change friendship status
+      Friend.findOneAndUpdate(
+        {
+          requester: authData.user._id,
+          recipient: req.params.userid,
+          status: 2,
+        },
+        { status: 3 },
+        { new: true }
+      ).then((result, err) => {
+        if (err) {
+          return next(err);
+        }
+        // if friend request not found
+        if (result === null) {
+          const error = new Error("Friend request not found.");
+          return next(error);
+        }
+        Friend.findOneAndUpdate(
+          {
+            requester: req.params.userid,
+            recipient: authData.user._id,
+          },
+          { status: 3 },
+          { new: true }
+        ).then((result, err) => {
+          if (err) {
+            return next(err);
+          }
+          if (result === null) {
+            const error = new Error("Friend request not found.");
+            return next(error);
+          }
+          return res.json({
+            message: "Friend request accepted",
+          });
+        });
+      });
+    } catch (err) {
+      return next(err);
+    }
   });
 };
 

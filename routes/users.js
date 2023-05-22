@@ -12,6 +12,9 @@ router.get("/:userid/friends", users_controller.get_friends);
 // add friend
 router.post("/:userid/friends/add-friend", users_controller.add_friend);
 
+// accept friend request
+router.put("/:userid/friends/accept-friend", users_controller.accept_friend);
+
 // reject friend request
 router.delete("/:userid/friends/reject-friend", users_controller.reject_friend);
 
