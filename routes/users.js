@@ -4,7 +4,7 @@ var router = express.Router();
 var users_controller = require("../controllers/usersController");
 
 // get user profile
-router.get("/:userid", users_controller.get_profile);
+router.get("/:userid/profile/", users_controller.get_profile);
 
 // get user's friends
 router.get("/:userid/friends", users_controller.get_friends);
