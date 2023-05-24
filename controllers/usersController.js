@@ -204,7 +204,82 @@ exports.accept_friend = (req, res, next) => {
 };
 
 exports.reject_friend = (req, res, next) => {
-  res.send("TBD");
+  // Check that userid is in valid form
+  let isValid = validateObjectId(req.params.userid);
+  if (!isValid) {
+    const error = new Error("User not found.");
+    return next(error);
+  }
+
+  // Extract bearer token
+  let bearerToken = "";
+  const bearerHeader = req.headers.authorization;
+  bearerToken = extractBearerToken(bearerHeader);
+
+  // Verify Token
+  jwt.verify(bearerToken, process.env.jwt_key, async (err, authData) => {
+    if (err) {
+      return next(err);
+    }
+    try {
+      Friend.findOneAndDelete({
+        requester: authData.user._id,
+        recipient: req.params.userid,
+        status: 2,
+      }).then((result, err) => {
+        if (err) {
+          return next(err);
+        }
+        if (!result) {
+          const error = new Error("Friend request not found");
+          return next(error);
+        }
+        User.findByIdAndUpdate(
+          { _id: authData.user._id },
+          { $pull: { friends: result._id } }
+        ).then((result, err) => {
+          if (err) {
+            return next(err);
+          }
+          if (!result) {
+            const error = new Error("Couldn't update friend status");
+            return next(error);
+          }
+          Friend.findOneAndDelete({
+            requester: req.params.userid,
+            recipient: authData.user._id,
+            status: 1,
+          }).then((result, err) => {
+            if (err) {
+              return next(err);
+            }
+            if (!result) {
+              const error = new Error("Friend request not found.");
+              return next(error);
+            }
+
+            User.findByIdAndUpdate(
+              { _id: req.params.userid },
+              { $pull: { friends: result._id } }
+            ).then((result, err) => {
+              if (err) {
+                return next(err);
+              }
+              if (!result) {
+                const error = new Error("Couldn't update friend status");
+                return next(error);
+              }
+              return res.json({
+                message: "Friend request removed",
+              });
+            });
+          });
+        });
+      });
+    } catch (err) {
+      return next(err);
+    }
+  });
 };
 
 exports.unfriend = (req, res, next) => {
