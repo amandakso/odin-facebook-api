@@ -391,9 +391,67 @@ exports.search_users = [
   },
 ];
 
-exports.update_bio = (req, res, next) => {
-  res.send("TBD");
-};
+exports.update_bio = [
+  // Validate and sanitize fields
+  body("bio", "Bio exceeds character limit.")
+    .trim()
+    .isLength({ max: 200 })
+    .escape(),
+
+  // Process request after validation and sanitization
+  (req, res, next) => {
+    // Extract the validation errors from a request
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      // Errors exist. Send json with error messages
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    // Check that user exists
+    let isValid = validateObjectId(req.params.userid);
+    if (!isValid) {
+      const error = new Error("Unable to update bio.");
+      return next(error);
+    }
+    // Extract bearer token
+    let bearerToken = "";
+    const bearerHeader = req.headers.authorization;
+    bearerToken = extractBearerToken(bearerHeader);
+
+    // Verify Token
+    jwt.verify(bearerToken, process.env.jwt_key, (err, authData) => {
+      if (err) {
+        return next(err);
+      }
+      // current user id doesn't match profile id
+      if (authData.user._id !== req.params.userid) {
+        const error = new Error("Not authorized.");
+        return next(error);
+      }
+
+      User.findByIdAndUpdate(
+        req.params.userid,
+        {
+          bio: req.body.bio,
+        },
+        { new: true }
+      ).then((result, err) => {
+        if (err) {
+          return next(err);
+        }
+        if (!result) {
+          const error = new Error("Unable to update bio.");
+          return next(error);
+        }
+        return res.json({
+          message: "Bio updated",
+          data: result.bio,
+        });
+      });
+    });
+  },
+];
 
 exports.update_photo = (req, res, next) => {
   res.send("TBD");
