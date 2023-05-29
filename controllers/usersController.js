@@ -457,9 +457,79 @@ exports.update_photo = (req, res, next) => {
   res.send("TBD");
 };
 
-exports.update_username = (req, res, next) => {
-  res.send("TBD");
-};
+exports.update_username = [
+  // Validate and sanitize fields
+  body("username")
+    .trim()
+    .isLength({ min: 1, max: 75 })
+    .escape()
+    .withMessage("Username not within character limits (1 - 75 characters).")
+    .isAlphanumeric()
+    .escape()
+    .withMessage("Only letters and numbers allowed"),
+
+  // Process request after validation and sanitization
+  (req, res, next) => {
+    // Extract the validation errors from a request
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      // Errors exist. Send json with error messages
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    // Check that user exists
+    let isValid = validateObjectId(req.params.userid);
+    if (!isValid) {
+      const error = new Error("Unable to update username.");
+      return next(error);
+    }
+
+    // Check if username is already taken
+    User.findOne({ username: req.body.username }).then((result, err) => {
+      if (result) {
+        const error = new Error("Username already taken");
+        return next(error);
+      }
+      // Extract bearer token
+      let bearerToken = "";
+      const bearerHeader = req.headers.authorization;
+      bearerToken = extractBearerToken(bearerHeader);
+
+      // Verify Token
+      jwt.verify(bearerToken, process.env.jwt_key, (err, authData) => {
+        if (err) {
+          return next(err);
+        }
+        // current user id doesn't match profile id
+        if (authData.user._id !== req.params.userid) {
+          const error = new Error("Not authorized.");
+          return next(error);
+        }
+
+        User.findByIdAndUpdate(
+          req.params.userid,
+          {
+            username: req.body.username,
+          },
+          { new: true }
+        ).then((result, err) => {
+          if (err) {
+            return next(err);
+          }
+          if (!result) {
+            const error = new Error("Unable to update username.");
+            return next(error);
+          }
+          return res.json({
+            message: "Username updated",
+            data: result.username,
+          });
+        });
+      });
+    });
+  },
+];
 
 exports.update_pwd = (req, res, next) => {
   res.send("TBD");
