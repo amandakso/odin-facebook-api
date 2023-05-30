@@ -3,7 +3,7 @@ User = require("../models/user");
 Friend = require("../models/friendship");
 
 const { body, validationResult } = require("express-validator");
-
+const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 require("dotenv").config();
@@ -531,9 +531,70 @@ exports.update_username = [
   },
 ];
 
-exports.update_pwd = (req, res, next) => {
-  res.send("TBD");
-};
+exports.update_pwd = [
+  // Validate and sanitize fields
+  body("password", "Password must be at least 8 characters")
+    .trim()
+    .isLength({ min: 8 })
+    .escape(),
+
+  // Process request after validation and sanitization
+  (req, res, next) => {
+    // Extract the validation errors from a request
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      // Errors exist. Send json with error messages
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    // Check that user exists
+    let isValid = validateObjectId(req.params.userid);
+    if (!isValid) {
+      const error = new Error("Unable to update password.");
+      return next(error);
+    }
+    // Extract bearer token
+    let bearerToken = "";
+    const bearerHeader = req.headers.authorization;
+    bearerToken = extractBearerToken(bearerHeader);
+
+    // Verify Token
+    jwt.verify(bearerToken, process.env.jwt_key, (err, authData) => {
+      if (err) {
+        return next(err);
+      }
+      // current user id doesn't match profile id
+      if (authData.user._id !== req.params.userid) {
+        const error = new Error("Not authorized.");
+        return next(error);
+      }
+      // hash password
+      bcrypt.hash(req.body.password, 10, (err, hashedPassword) => {
+        if (err) {
+          return next(err);
+        }
+        User.findByIdAndUpdate(
+          req.params.userid,
+          { password: hashedPassword },
+          { new: true }
+        ).then((result, err) => {
+          if (err) {
+            return next(err);
+          }
+          if (!result) {
+            const error = new Error("Unable to update password.");
+            return next(error);
+          }
+          return res.json({
+            message: "Password updated",
+            data: result.username,
+          });
+        });
+      });
+    });
+  },
+];
 
 function validateObjectId(id) {
   isValid = mongoose.Types.ObjectId.isValid(id);
