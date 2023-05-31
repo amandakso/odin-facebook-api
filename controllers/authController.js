@@ -31,7 +31,7 @@ exports.signup = [
   }),
 
   // Process request after validation and sanitization
-  (req, res, done) => {
+  (req, res, next) => {
     // Extract the validation errors from request
     const errors = validationResult(req);
 
@@ -43,23 +43,32 @@ exports.signup = [
       });
       return;
     }
-
-    // Create a new user
-    const user = new User({
-      username: req.body.username,
-      password: req.body.password,
-    })
-      .save()
-      .then((user) => {
-        res.json({
-          message: "New user created",
-          user: user,
-        });
-        return;
-      })
-      .catch((err) => {
-        done(err);
-      });
+    // Check if username is unique
+    User.findOne({ username: req.body.username }).then((result, err) => {
+      if (err) {
+        return next(err);
+      } else if (result) {
+        const error = new Error("Username already taken");
+        return next(error);
+      } else {
+        // Create a new user
+        const user = new User({
+          username: req.body.username,
+          password: req.body.password,
+        })
+          .save()
+          .then((user) => {
+            res.json({
+              message: "New user created",
+              user: user,
+            });
+            return;
+          })
+          .catch((err) => {
+            done(err);
+          });
+      }
+    });
   },
 ];
 
