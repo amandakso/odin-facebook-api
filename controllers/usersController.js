@@ -2,9 +2,16 @@ const mongoose = require("mongoose");
 User = require("../models/user");
 Friend = require("../models/friendship");
 
+const fs = require("fs");
+
 const { body, validationResult } = require("express-validator");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const multer = require("multer");
+const upload = multer({
+  limits: { fileSize: 16 * 1024 * 1024 },
+  dest: "../uploads/",
+}).single("picture");
 
 require("dotenv").config();
 
@@ -454,7 +461,59 @@ exports.update_bio = [
 ];
 
 exports.update_photo = (req, res, next) => {
-  res.send("TBD");
+  // Check that user exists
+  let isValid = validateObjectId(req.params.userid);
+  if (!isValid) {
+    const error = new Error("Unable to update profile photo.");
+    return next(error);
+  }
+
+  // Extract bearer token
+  let bearerToken = "";
+  const bearerHeader = req.headers.authorization;
+  bearerToken = extractBearerToken(bearerHeader);
+
+  // Verify Token
+  jwt.verify(bearerToken, process.env.jwt_key, (err, authData) => {
+    if (err) {
+      return next(err);
+    }
+    // current user id doesn't match profile id
+    if (authData.user._id !== req.params.userid) {
+      const error = new Error("Not authorized.");
+      return next(error);
+    } else {
+      upload(req, res, function (err) {
+        if (err) {
+          return res.status(500).json({ error: "Unable to upload photo." });
+        }
+        if (req.file == null) {
+          const error = new Error("No file selected.");
+          return next(error);
+        }
+        let newImg = fs.readFileSync(req.file.path);
+        let encImg = newImg.toString("base64");
+        User.findByIdAndUpdate(
+          req.params.userid,
+          {
+            photo: Buffer.from(encImg, "base64"),
+          },
+          { new: true }
+        ).then((result, err) => {
+          if (err) {
+            return next(err);
+          }
+          if (!result) {
+            const error = new Error("Unable to update profile photo");
+            return next(error);
+          }
+          return res.json({
+            message: "Profile photo updated",
+          });
+        });
+      });
+    }
+  });
 };
 
 exports.update_username = [
