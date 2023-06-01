@@ -11,7 +11,7 @@ const multer = require("multer");
 const upload = multer({
   limits: { fileSize: 16 * 1024 * 1024 },
   dest: "../uploads/",
-}).single("picture");
+}).single("picture"); // limit file size to 16 MB
 
 require("dotenv").config();
 

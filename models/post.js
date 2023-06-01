@@ -12,6 +12,7 @@ const PostSchema = new Schema(
   { timestamps: true }
 );
 
+// remove likes and comments of to-be-deleted post
 PostSchema.pre("findOneAndDelete", async function (next) {
   try {
     const post = this;

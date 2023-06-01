@@ -17,6 +17,7 @@ const UserSchema = new Schema({
   friends: [{ type: Schema.Types.ObjectId, ref: "Friend" }],
 });
 
+// hash password of new user
 UserSchema.pre("save", async function (next) {
   const user = this;
   const hash = await bcrypt.hash(this.password, 10);
@@ -25,6 +26,7 @@ UserSchema.pre("save", async function (next) {
   next();
 });
 
+// check if password is the same as password in db
 UserSchema.methods.isValidPassword = async function (password) {
   const user = this;
   const compare = await bcrypt.compare(password, user.password);
