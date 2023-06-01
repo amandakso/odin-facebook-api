@@ -45,6 +45,7 @@ exports.signup = [
     }
     // Check if username is unique
     User.findOne({ username: req.body.username }).then((result, err) => {
+      console.log(result);
       if (err) {
         return next(err);
       } else if (result) {
@@ -60,7 +61,8 @@ exports.signup = [
           .then((user) => {
             res.json({
               message: "New user created",
-              user: user,
+              _id: user._id,
+              username: user.username,
             });
             return;
           })
