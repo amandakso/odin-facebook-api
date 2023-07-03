@@ -22,7 +22,7 @@ passport.use(
         return done(null, false, { message: "Wrong Password" });
       }
 
-      return done(null, user, { success: "Logged in Successfully" });
+      return done(null, user);
     } catch (error) {
       return done(error);
     }

@@ -86,7 +86,6 @@ exports.login = async (req, res, next) => {
         const error = new Error("An error occurred. User not found.");
         return res.json({ error: error.message });
       }
-
       req.login(user, { session: false }, async (error) => {
         if (error) return res.json({ error: error.message });
 
