@@ -79,6 +79,9 @@ exports.login = async (req, res, next) => {
       if (err) {
         return res.json({ error: err.message });
       }
+      if (info) {
+        return res.json(info);
+      }
       if (!user) {
         const error = new Error("An error occurred. User not found.");
         return res.json({ error: error.message });
