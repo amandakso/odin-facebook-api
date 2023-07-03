@@ -74,13 +74,13 @@ exports.signup = [
 ];
 
 exports.login = async (req, res, next) => {
-  passport.authenticate("login", async (err, user, info) => {
+  passport.authenticate("login", async (err, user, message) => {
     try {
       if (err) {
         return res.json({ error: err.message });
       }
-      if (info) {
-        return res.json(info);
+      if (message) {
+        return res.json(message);
       }
       if (!user) {
         const error = new Error("An error occurred. User not found.");
