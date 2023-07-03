@@ -43,13 +43,15 @@ exports.signup = [
       });
       return;
     }
+    // convert username to lowercase
+    let username = req.body.username.toLowerCase();
     // Check if username is unique
-    User.findOne({ username: req.body.username }).then((result, err) => {
+    User.findOne({ username: username }).then((result, err) => {
       if (err) {
-        return next(err);
+        return res.json({ error: err.message });
       } else if (result) {
         const error = new Error("Username already taken");
-        return next(error);
+        return res.json({ error: error.message });
       } else {
         // Create a new user
         const user = new User({
@@ -59,14 +61,12 @@ exports.signup = [
           .save()
           .then((user) => {
             res.json({
-              message: "New user created",
-              _id: user._id,
-              username: user.username,
+              message: `New user,${user.username}, created. Log in to account.`,
             });
             return;
           })
           .catch((err) => {
-            done(err);
+            return res.json({ error: err.message });
           });
       }
     });
