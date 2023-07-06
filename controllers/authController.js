@@ -105,9 +105,9 @@ exports.logout = (req, res) => {
   const authHeader = req.headers["authorization"];
   jwt.sign(authHeader, "", { expiresIn: 1 }, (logout, err) => {
     if (logout) {
-      res.json({ message: "You have been logged out" });
+      res.json({ logout: true, message: "You have been logged out" });
     } else {
-      res.json({ message: err.message });
+      res.json({ logout: false, message: err.message });
     }
   });
 };
