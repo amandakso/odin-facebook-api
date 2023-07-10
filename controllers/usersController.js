@@ -370,33 +370,21 @@ exports.unfriend = (req, res, next) => {
   });
 };
 
-exports.search_users = [
-  // Sanitize search field
-  body("search").trim().escape(),
-
-  //Process search request
-  (req, res, next) => {
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-      // Errors exist. Send json with error messages
-      return res.status(400).json({ errors: errors.array() });
-    }
-    User.find({
-      username: { $regex: ".*" + req.body.search + ".*", $options: "i" },
-    })
-      .select("username")
-      .then((result, err) => {
-        if (err) {
-          return next(err);
-        }
-        return res.json({
-          search: req.body.search,
-          result: result,
-        });
+exports.search_users = (req, res, next) => {
+  User.find({
+    username: { $regex: ".*" + req.query.search + ".*", $options: "i" },
+  })
+    .select("username")
+    .then((result, err) => {
+      if (err) {
+        return res.json({ error: err });
+      }
+      return res.json({
+        search: req.query.search,
+        result: result,
       });
-  },
-];
+    });
+};
 
 exports.update_bio = [
   // Validate and sanitize fields
