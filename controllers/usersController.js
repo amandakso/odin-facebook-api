@@ -19,7 +19,7 @@ exports.get_profile = (req, res, next) => {
   let isValid = validateObjectId(req.params.userid);
   if (!isValid) {
     const error = new Error("User not found.");
-    return next(error);
+    return res.json({ error: error.message });
   }
   User.findById(req.params.userid)
     .select("username photo bio friends")
@@ -27,11 +27,14 @@ exports.get_profile = (req, res, next) => {
     .then((profile, err) => {
       try {
         if (err) {
-          return next(err);
+          return res.json({ error: err.message });
+        } else {
+          return res.json(profile);
         }
-        return res.json(profile);
       } catch (error) {
-        return next(error);
+        if (error instanceof Error) {
+          return res.json({ error: error.message });
+        }
       }
     });
 };
