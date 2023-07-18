@@ -410,7 +410,7 @@ exports.update_bio = [
     let isValid = validateObjectId(req.params.userid);
     if (!isValid) {
       const error = new Error("Unable to update bio.");
-      return next(error);
+      return res.json({ error: error.message });
     }
     // Extract bearer token
     let bearerToken = "";
@@ -420,12 +420,12 @@ exports.update_bio = [
     // Verify Token
     jwt.verify(bearerToken, process.env.jwt_key, (err, authData) => {
       if (err) {
-        return next(err);
+        return res.json({ error: err.message });
       }
       // current user id doesn't match profile id
       if (authData.user._id !== req.params.userid) {
         const error = new Error("Not authorized.");
-        return next(error);
+        return res.json({ error: error.message });
       }
 
       User.findByIdAndUpdate(
@@ -436,11 +436,11 @@ exports.update_bio = [
         { new: true }
       ).then((result, err) => {
         if (err) {
-          return next(err);
+          return res.json({ error: err.message });
         }
         if (!result) {
           const error = new Error("Unable to update bio.");
-          return next(error);
+          return res.json({ error: error.message });
         }
         return res.json({
           message: "Bio updated",
