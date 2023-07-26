@@ -605,7 +605,7 @@ exports.update_pwd = [
     let isValid = validateObjectId(req.params.userid);
     if (!isValid) {
       const error = new Error("Unable to update password.");
-      return next(error);
+      return res.json({ error: error.message });
     }
     // Extract bearer token
     let bearerToken = "";
@@ -615,17 +615,17 @@ exports.update_pwd = [
     // Verify Token
     jwt.verify(bearerToken, process.env.jwt_key, (err, authData) => {
       if (err) {
-        return next(err);
+        return res.json({ error: err.message });
       }
       // current user id doesn't match profile id
       if (authData.user._id !== req.params.userid) {
         const error = new Error("Not authorized.");
-        return next(error);
+        return res.json({ error: error.message });
       }
       // hash password
       bcrypt.hash(req.body.password, 10, (err, hashedPassword) => {
         if (err) {
-          return next(err);
+          return res.json({ error: err.message });
         }
         User.findByIdAndUpdate(
           req.params.userid,
@@ -633,11 +633,11 @@ exports.update_pwd = [
           { new: true }
         ).then((result, err) => {
           if (err) {
-            return next(err);
+            return res.json({ error: err.message });
           }
           if (!result) {
             const error = new Error("Unable to update password.");
-            return next(error);
+            return res.json({ error: error.message });
           }
           return res.json({
             message: "Password updated",
