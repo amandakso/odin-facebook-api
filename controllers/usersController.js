@@ -82,7 +82,33 @@ exports.get_friends = (req, res, next) => {
 };
 
 exports.get_friendship = (req, res, next) => {
-  return res.json({ status: "TODO" });
+  let isValid = validateObjectId(req.params.userid);
+  let isValid2 = validateObjectId(req.params.otherid);
+  if (!isValid || !isValid2) {
+    const error = new Error("Unable to find users");
+    return res.json({ error: error.message });
+  }
+
+  Friend.findOne({
+    requester: req.params.userid,
+    recipient: req.params.otherid,
+  })
+    .select("status")
+    .then((result, err) => {
+      try {
+        if (err) {
+          return res.json({ status: null, error: err.message });
+        }
+        if (!result) {
+          return res.json({ status: result });
+        }
+        return res.json({ status: result.status });
+      } catch (error) {
+        if (error instanceof Error) {
+          return res.json({ status: null, error: error.message });
+        }
+      }
+    });
 };
 
 exports.add_friend = (req, res, next) => {
