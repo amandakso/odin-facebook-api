@@ -3,6 +3,9 @@ var router = express.Router();
 
 var users_controller = require("../controllers/usersController");
 
+// get a username's profile id
+router.get("/username-search/:username", users_controller.username_search);
+
 // get user profile
 router.get("/:userid/profile/", users_controller.get_profile);
 
