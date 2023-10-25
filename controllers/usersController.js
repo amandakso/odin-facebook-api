@@ -81,6 +81,10 @@ exports.get_friends = (req, res, next) => {
     });
 };
 
+exports.get_friendship = (req, res, next) => {
+  return res.json({ status: "TODO" });
+};
+
 exports.add_friend = (req, res, next) => {
   // Check that userid is in valid form
   let isValid = validateObjectId(req.params.userid);

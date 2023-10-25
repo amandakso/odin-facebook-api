@@ -12,6 +12,12 @@ router.get("/:userid/profile/", users_controller.get_profile);
 // get user's friends
 router.get("/:userid/friends", users_controller.get_friends);
 
+// check friendship status
+router.get(
+  "/check-friendship/:userid/:otherid",
+  users_controller.get_friendship
+);
+
 // add friend
 router.post("/:userid/friends/add-friend", users_controller.add_friend);
 
