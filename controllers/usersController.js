@@ -15,6 +15,27 @@ const upload = multer({
 
 require("dotenv").config();
 
+exports.username_search = (req, res, next) => {
+  // make username lowercase
+  let username = req.params.username?.toLowerCase();
+
+  User.findOne({ username: username })
+    .select("_id")
+    .then((profile, err) => {
+      try {
+        if (err) {
+          return res.json({ error: err.message });
+        } else {
+          return res.json(profile);
+        }
+      } catch (error) {
+        if (error instanceof Error) {
+          return res.json({ error: error.message });
+        }
+      }
+    });
+};
+
 exports.get_profile = (req, res, next) => {
   let isValid = validateObjectId(req.params.userid);
   if (!isValid) {
