@@ -127,12 +127,12 @@ exports.add_friend = (req, res, next) => {
   // Verify Token
   jwt.verify(bearerToken, process.env.jwt_key, async (err, authData) => {
     if (err) {
-      return next(err);
+      return res.json({ status: "fail", error: err.message });
     }
     // current user id is the same as requested friend id
     if (authData.user._id === req.params.userid) {
       const error = new Error("Can't befriend self");
-      return next(error);
+      return res.json({ status: "fail", error: err.message });
     }
 
     // check that user exists
@@ -140,10 +140,10 @@ exports.add_friend = (req, res, next) => {
       const friendRequest = await User.findById(req.params.userid);
       if (friendRequest === null) {
         const error = new Error("Unable to find user.");
-        return next(error);
+        return res.json({ status: "fail", error: err.message });
       }
     } catch (err) {
-      return next(err);
+      return res.json({ status: "fail", error: err.message });
     }
 
     try {
@@ -157,19 +157,19 @@ exports.add_friend = (req, res, next) => {
         { new: true, upsert: true }
       ).then((result, err) => {
         if (err) {
-          return next(err);
+          return res.json({ status: "fail", error: err.message });
         }
         User.findByIdAndUpdate(
           { _id: authData.user._id },
           { $addToSet: { friends: result._id } }
         ).catch((err) => {
           if (err) {
-            return next(err);
+            return res.json({ status: "fail", error: err.message });
           }
         });
       });
     } catch (err) {
-      return next(err);
+      return res.json({ status: "fail", error: err.message });
     }
     try {
       // pending friend request from requested user
@@ -182,21 +182,22 @@ exports.add_friend = (req, res, next) => {
         { new: true, upsert: true }
       ).then((result, err) => {
         if (err) {
-          return next(err);
+          return res.json({ status: "fail", error: err.message });
         }
         User.findByIdAndUpdate(
           { _id: req.params.userid },
           { $addToSet: { friends: result._id } }
         ).catch((err) => {
           if (err) {
-            return next(err);
+            return res.json({ status: "fail", error: err.message });
           }
         });
       });
     } catch (err) {
-      return next(err);
+      return res.json({ status: "fail", error: err.message });
     }
     return res.json({
+      status: "success",
       message: "Friend request sent.",
     });
   });
