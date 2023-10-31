@@ -116,7 +116,7 @@ exports.add_friend = (req, res, next) => {
   let isValid = validateObjectId(req.params.userid);
   if (!isValid) {
     const error = new Error("User not found.");
-    return next(error);
+    return res.json({ status: "fail", error: error.message });
   }
 
   // Extract bearer token
@@ -132,7 +132,7 @@ exports.add_friend = (req, res, next) => {
     // current user id is the same as requested friend id
     if (authData.user._id === req.params.userid) {
       const error = new Error("Can't befriend self");
-      return res.json({ status: "fail", error: err.message });
+      return res.json({ status: "fail", error: error.message });
     }
 
     // check that user exists
@@ -140,7 +140,7 @@ exports.add_friend = (req, res, next) => {
       const friendRequest = await User.findById(req.params.userid);
       if (friendRequest === null) {
         const error = new Error("Unable to find user.");
-        return res.json({ status: "fail", error: err.message });
+        return res.json({ status: "fail", error: error.message });
       }
     } catch (err) {
       return res.json({ status: "fail", error: err.message });
@@ -208,7 +208,7 @@ exports.accept_friend = (req, res, next) => {
   let isValid = validateObjectId(req.params.userid);
   if (!isValid) {
     const error = new Error("User not found.");
-    return next(error);
+    res.json({ status: "fail", error: error.message });
   }
 
   // Extract bearer token
@@ -219,7 +219,7 @@ exports.accept_friend = (req, res, next) => {
   // Verify Token
   jwt.verify(bearerToken, process.env.jwt_key, async (err, authData) => {
     if (err) {
-      return next(err);
+      res.json({ status: "fail", error: err.message });
     }
 
     try {
@@ -234,12 +234,12 @@ exports.accept_friend = (req, res, next) => {
         { new: true }
       ).then((result, err) => {
         if (err) {
-          return next(err);
+          return res.json({ status: "fail", error: err.message });
         }
         // if friend request not found
         if (result === null) {
           const error = new Error("Friend request not found.");
-          return next(error);
+          return res.json({ status: "fail", error: error.message });
         }
         Friend.findOneAndUpdate(
           {
@@ -250,19 +250,20 @@ exports.accept_friend = (req, res, next) => {
           { new: true }
         ).then((result, err) => {
           if (err) {
-            return next(err);
+            return res.json({ status: "fail", error: err.message });
           }
           if (result === null) {
             const error = new Error("Friend request not found.");
-            return next(error);
+            return res.json({ status: "fail", error: error.message });
           }
           return res.json({
+            status: "success",
             message: "Friend request accepted",
           });
         });
       });
     } catch (err) {
-      return next(err);
+      return res.json({ status: "fail", error: err.message });
     }
   });
 };
@@ -272,7 +273,7 @@ exports.reject_friend = (req, res, next) => {
   let isValid = validateObjectId(req.params.userid);
   if (!isValid) {
     const error = new Error("User not found.");
-    return next(error);
+    return res.json({ status: "fail", error: error.message });
   }
 
   // Extract bearer token
@@ -283,7 +284,7 @@ exports.reject_friend = (req, res, next) => {
   // Verify Token
   jwt.verify(bearerToken, process.env.jwt_key, async (err, authData) => {
     if (err) {
-      return next(err);
+      return res.json({ status: "fail", error: err.message });
     }
     try {
       Friend.findOneAndDelete({
@@ -292,22 +293,22 @@ exports.reject_friend = (req, res, next) => {
         status: 2,
       }).then((result, err) => {
         if (err) {
-          return next(err);
+          return res.json({ status: "fail", error: err.message });
         }
         if (!result) {
           const error = new Error("Friend request not found");
-          return next(error);
+          return res.json({ status: "fail", error: error.message });
         }
         User.findByIdAndUpdate(
           { _id: authData.user._id },
           { $pull: { friends: result._id } }
         ).then((result, err) => {
           if (err) {
-            return next(err);
+            return res.json({ status: "fail", error: err.message });
           }
           if (!result) {
             const error = new Error("Couldn't update friend status");
-            return next(error);
+            return res.json({ status: "fail", error: error.message });
           }
           Friend.findOneAndDelete({
             requester: req.params.userid,
@@ -315,11 +316,11 @@ exports.reject_friend = (req, res, next) => {
             status: 1,
           }).then((result, err) => {
             if (err) {
-              return next(err);
+              return res.json({ status: "fail", error: err.message });
             }
             if (!result) {
               const error = new Error("Friend request not found.");
-              return next(error);
+              return res.json({ status: "fail", error: error.message });
             }
 
             User.findByIdAndUpdate(
@@ -327,13 +328,14 @@ exports.reject_friend = (req, res, next) => {
               { $pull: { friends: result._id } }
             ).then((result, err) => {
               if (err) {
-                return next(err);
+                return res.json({ status: "fail", error: err.message });
               }
               if (!result) {
                 const error = new Error("Couldn't update friend status");
-                return next(error);
+                return nres.json({ status: "fail", error: err.message });
               }
               return res.json({
+                status: "success",
                 message: "Friend request removed",
               });
             });
@@ -341,7 +343,7 @@ exports.reject_friend = (req, res, next) => {
         });
       });
     } catch (err) {
-      return next(err);
+      return res.json({ status: "fail", error: err.message });
     }
   });
 };
