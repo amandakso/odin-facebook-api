@@ -353,7 +353,7 @@ exports.unfriend = (req, res, next) => {
   let isValid = validateObjectId(req.params.userid);
   if (!isValid) {
     const error = new Error("User not found.");
-    return next(error);
+    return res.json({ status: "fail", error: errir.message });
   }
 
   // Extract bearer token
@@ -364,7 +364,7 @@ exports.unfriend = (req, res, next) => {
   // Verify Token
   jwt.verify(bearerToken, process.env.jwt_key, async (err, authData) => {
     if (err) {
-      return next(err);
+      return res.json({ status: "fail", error: err.message });
     }
     try {
       Friend.findOneAndDelete({
@@ -373,22 +373,22 @@ exports.unfriend = (req, res, next) => {
         status: 3,
       }).then((result, err) => {
         if (err) {
-          return next(err);
+          return res.json({ status: "fail", error: err.message });
         }
         if (!result) {
           const error = new Error("Friend not found");
-          return next(error);
+          return res.json({ status: "fail", error: error.message });
         }
         User.findByIdAndUpdate(
           { _id: authData.user._id },
           { $pull: { friends: result._id } }
         ).then((result, err) => {
           if (err) {
-            return next(err);
+            return res.json({ status: "fail", error: err.message });
           }
           if (!result) {
             const error = new Error("Couldn't update friend status");
-            return next(error);
+            return res.json({ status: "fail", error: error.message });
           }
           Friend.findOneAndDelete({
             requester: req.params.userid,
@@ -396,11 +396,11 @@ exports.unfriend = (req, res, next) => {
             status: 3,
           }).then((result, err) => {
             if (err) {
-              return next(err);
+              return res.json({ status: "fail", error: err.message });
             }
             if (!result) {
               const error = new Error("Friend not found.");
-              return next(error);
+              return res.json({ status: "fail", error: error.message });
             }
 
             User.findByIdAndUpdate(
@@ -408,13 +408,14 @@ exports.unfriend = (req, res, next) => {
               { $pull: { friends: result._id } }
             ).then((result, err) => {
               if (err) {
-                return next(err);
+                return res.json({ status: "fail", error: err.message });
               }
               if (!result) {
                 const error = new Error("Couldn't update friend status");
-                return next(error);
+                return res.json({ status: "fail", error: error.message });
               }
               return res.json({
+                status: "success",
                 message: "Unfriended user.",
               });
             });
@@ -422,7 +423,7 @@ exports.unfriend = (req, res, next) => {
         });
       });
     } catch (err) {
-      return next(err);
+      return res.json({ status: "fail", error: err.message });
     }
   });
 };
