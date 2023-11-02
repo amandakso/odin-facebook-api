@@ -1,5 +1,6 @@
 var express = require("express");
 var router = express.Router();
+const cors = require("cors");
 
 var users_controller = require("../controllers/usersController");
 
@@ -37,7 +38,11 @@ router.get("/search", users_controller.search_users);
 router.put("/:userid/profile/update-bio", users_controller.update_bio);
 
 // update profile photo
-router.put("/:userid/profile/update-photo", users_controller.update_photo);
+router.put(
+  "/:userid/profile/update-photo",
+  cors(),
+  users_controller.update_photo
+);
 
 // update profile username
 router.put(
