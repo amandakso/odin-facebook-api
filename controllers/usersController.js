@@ -511,7 +511,7 @@ exports.update_photo = (req, res, next) => {
   let isValid = validateObjectId(req.params.userid);
   if (!isValid) {
     const error = new Error("Unable to update profile photo.");
-    return next(error);
+    return res.json({ error: error.message });
   }
 
   // Extract bearer token
@@ -522,12 +522,12 @@ exports.update_photo = (req, res, next) => {
   // Verify Token
   jwt.verify(bearerToken, process.env.jwt_key, (err, authData) => {
     if (err) {
-      return next(err);
+      return res.json({ error: err.message });
     }
     // current user id doesn't match profile id
     if (authData.user._id !== req.params.userid) {
       const error = new Error("Not authorized.");
-      return next(error);
+      return res.json({ error: error.message });
     } else {
       upload(req, res, function (err) {
         if (err) {
@@ -535,7 +535,7 @@ exports.update_photo = (req, res, next) => {
         }
         if (req.file == null) {
           const error = new Error("No file selected.");
-          return next(error);
+          return res.json({ error: error.message });
         }
         let newImg = fs.readFileSync(req.file.path);
         let encImg = newImg.toString("base64");
@@ -547,13 +547,14 @@ exports.update_photo = (req, res, next) => {
           { new: true }
         ).then((result, err) => {
           if (err) {
-            return next(err);
+            return res.json({ error: err.message });
           }
           if (!result) {
             const error = new Error("Unable to update profile photo");
-            return next(error);
+            return res.json({ error: error.message });
           }
           return res.json({
+            data: result.photo,
             message: "Profile photo updated",
           });
         });
