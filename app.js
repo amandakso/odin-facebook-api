@@ -9,6 +9,8 @@ var indexRouter = require("./routes/index");
 var apiRouter = require("./routes/api");
 
 require("dotenv").config();
+// CORS
+app.use(cors());
 
 var app = express();
 
@@ -30,9 +32,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
-
-// CORS
-app.use(cors());
 
 app.use("/", indexRouter);
 app.use("/api", apiRouter);
