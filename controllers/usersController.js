@@ -509,6 +509,7 @@ exports.update_bio = [
 exports.update_photo = (req, res, next) => {
   // Check that user exists
   let isValid = validateObjectId(req.params.userid);
+  console.log("isvalid: " + isValid);
   if (!isValid) {
     const error = new Error("Unable to update profile photo.");
     return res.json({ error: error.message });
@@ -522,6 +523,7 @@ exports.update_photo = (req, res, next) => {
   // Verify Token
   jwt.verify(bearerToken, process.env.jwt_key, (err, authData) => {
     if (err) {
+      console.log("token " + err.message);
       return res.json({ error: err.message });
     }
     // current user id doesn't match profile id
@@ -531,6 +533,7 @@ exports.update_photo = (req, res, next) => {
     } else {
       upload(req, res, function (err) {
         if (err) {
+          console.log("upload" + err.message);
           return res.status(500).json({ error: "Unable to upload photo." });
         }
         if (req.file == null) {
