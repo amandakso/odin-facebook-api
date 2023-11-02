@@ -9,10 +9,10 @@ var indexRouter = require("./routes/index");
 var apiRouter = require("./routes/api");
 
 require("dotenv").config();
-// CORS
-app.use(cors());
 
 var app = express();
+// CORS
+app.use(cors());
 
 // Set up mongoose connection
 const mongoose = require("mongoose");
