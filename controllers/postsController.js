@@ -72,7 +72,7 @@ exports.create_post = [
     // Verify Token
     jwt.verify(bearerToken, process.env.jwt_key, (err, authData) => {
       if (err) {
-        return next(err);
+        return res.json({ error: err.message });
       }
       const post = new Post({
         author: authData.user._id,
@@ -81,6 +81,7 @@ exports.create_post = [
         .save()
         .then(() => {
           return res.json({
+            success: true,
             message: "New post created",
             data: authData,
           });
