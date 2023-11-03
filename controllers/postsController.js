@@ -10,7 +10,8 @@ require("dotenv").config();
 exports.get_posts = (req, res, next) => {
   let isValid = validateObjectId(req.params.userid);
   if (!isValid) {
-    return next();
+    const error = new Error("Unable to get posts.");
+    return res.json({ error: error.message });
   }
   Post.find({ author: req.params.userid })
     .sort({ createdAt: -1 })
@@ -18,11 +19,11 @@ exports.get_posts = (req, res, next) => {
     .then((list_posts, err) => {
       try {
         if (err) {
-          return next(err);
+          return res.json({ error: err.message });
         }
-        return res.json(list_posts);
+        return res.json({ posts: list_posts });
       } catch (error) {
-        return next(error);
+        return res.json({ error: error.message });
       }
     });
 };
