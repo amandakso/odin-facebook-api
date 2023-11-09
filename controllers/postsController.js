@@ -229,7 +229,7 @@ exports.like_post = (req, res, next) => {
   let isValid = validateObjectId(req.params.postid);
   if (!isValid) {
     const error = new Error("Unable to find post.");
-    return next(error);
+    return res.json({ error: error.message });
   }
 
   // Check that post exists
@@ -239,7 +239,7 @@ exports.like_post = (req, res, next) => {
     }
     if (!result) {
       const error = new Error("Post not found. Unable to like post.");
-      return next(error);
+      return res.json({ error: err.message });
     }
     // Extract bearer token
     let bearerToken = "";
@@ -249,7 +249,7 @@ exports.like_post = (req, res, next) => {
     // Verify Token
     jwt.verify(bearerToken, process.env.jwt_key, (err, authData) => {
       if (err) {
-        return next(err);
+        return res.json({ error: err.message });
       }
 
       Likes.findOneAndUpdate(
@@ -258,11 +258,11 @@ exports.like_post = (req, res, next) => {
         { new: true, upsert: true }
       ).then((result, err) => {
         if (err) {
-          return next(err);
+          return res.json({ error: err.message });
         }
         return res.json({
           message: "User liked post.",
-          data: result,
+          likes: result,
         });
       });
     });
