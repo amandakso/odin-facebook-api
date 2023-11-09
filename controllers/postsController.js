@@ -209,18 +209,18 @@ exports.get_likes = (req, res, next) => {
   let isValid = validateObjectId(req.params.postid);
   if (!isValid) {
     const error = new Error("Unable to find post.");
-    return next(error);
+    return res.json({ error: error.message });
   }
   Likes.findOne({ postid: req.params.postid })
     .populate("users", "username")
     .then((list_likes, err) => {
       try {
         if (err) {
-          return next(err);
+          return res.json({ error: err.message });
         }
-        return res.json(list_likes);
+        return res.json({ likes: list_likes });
       } catch (error) {
-        return next(error);
+        return next(res.json({ error: error.message }));
       }
     });
 };
