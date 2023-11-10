@@ -317,7 +317,7 @@ exports.get_comments = (req, res, next) => {
   let isValid = validateObjectId(req.params.postid);
   if (!isValid) {
     const error = new Error("Post not found");
-    return next(error);
+    return res.json({ error: error.message });
   }
   Comment.find({ postid: req.params.postid })
     .sort({ createdAt: -1 })
@@ -325,11 +325,11 @@ exports.get_comments = (req, res, next) => {
     .then((list_comments, err) => {
       try {
         if (err) {
-          return next(err);
+          return res.json({ error: err.message });
         }
-        return res.json(list_comments);
+        return res.json({ comments: list_comments });
       } catch (error) {
-        return next(error);
+        return res.json({ error: error.message });
       }
     });
 };
