@@ -408,7 +408,7 @@ exports.create_comment = [
           .then(() => {
             return res.json({
               message: "New comment created",
-              data: authData,
+              data: comment,
             });
           })
           .catch((err) => {
