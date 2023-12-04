@@ -378,16 +378,16 @@ exports.create_comment = [
 
     if (!isValid) {
       const error = new Error("Post not found");
-      return next(error);
+      return res.json({ error: error.message });
     }
     // Check that post exists
     Post.findById(req.params.postid).then((result, err) => {
       if (err) {
-        return next(err);
+        return res.json({ error: err.message });
       }
       if (!result) {
         const error = new Error("Post not found. Unable to comment on post.");
-        return next(error);
+        return res.json({ error: error.message });
       }
       // Extract bearer token
       let bearerToken = "";
@@ -397,7 +397,7 @@ exports.create_comment = [
       // Verify Token
       jwt.verify(bearerToken, process.env.jwt_key, (err, authData) => {
         if (err) {
-          return next(err);
+          return res.json({ error: err.message });
         }
         const comment = new Comment({
           postid: req.params.postid,
