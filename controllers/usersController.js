@@ -69,12 +69,12 @@ exports.get_friends = (req, res, next) => {
   User.findById(req.params.userid)
     .select("friends")
     .populate("friends")
-    .then((list_friends, err) => {
+    .then((user, err) => {
       try {
         if (err) {
           return res.json({ error: err.message });
         }
-        return res.json({ friends: list_friends });
+        return res.json({ friends: user.friends });
       } catch (error) {
         return res.json({ error: error.message });
       }
