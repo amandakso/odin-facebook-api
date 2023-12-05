@@ -64,7 +64,7 @@ exports.get_friends = (req, res, next) => {
   let isValid = validateObjectId(req.params.userid);
   if (!isValid) {
     const error = new Error("User not found.");
-    return next(error);
+    return res.json({ error: error.message });
   }
   User.findById(req.params.userid)
     .select("friends")
@@ -72,11 +72,11 @@ exports.get_friends = (req, res, next) => {
     .then((list_friends, err) => {
       try {
         if (err) {
-          return next(err);
+          return res.json({ error: err.message });
         }
-        return res.json(list_friends);
+        return res.json({ friends: list_friends });
       } catch (error) {
-        return next(error);
+        return res.json({ error: error.message });
       }
     });
 };
