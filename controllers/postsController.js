@@ -493,20 +493,19 @@ exports.delete_comment = (req, res, next) => {
 
   if (!isValid) {
     const error = new Error("Comment not found");
-    return next(error);
+    return res.json({ error: error.message });
   }
   Comment.findById(req.params.commentid)
     .select("author postid")
     .lean("author")
     .populate("postid", "author")
     .then((result, err) => {
-      console.log(result);
       if (err) {
-        return next(err);
+        return res.json({ error: err.message });
       }
       if (!result) {
         const error = new Error("Comment not found. Unable to update comment.");
-        return next(error);
+        return res.json({ error: error.message });
       }
       // Extract bearer token
       let bearerToken = "";
@@ -516,7 +515,7 @@ exports.delete_comment = (req, res, next) => {
       // Verify Token
       jwt.verify(bearerToken, process.env.jwt_key, (err, authData) => {
         if (err) {
-          return next(err);
+          return res.json({ error: err.message });
         }
         // current user id doesn't match comment author id and doesn't match post author id
         if (
@@ -524,14 +523,15 @@ exports.delete_comment = (req, res, next) => {
           authData.user.id !== result.postid.author
         ) {
           const error = new Error("Not authorized.");
-          return next(error);
+          return res.json({ error: error.message });
         }
 
         Comment.findByIdAndDelete(req.params.commentid).then((result, err) => {
           if (err) {
-            return next(err);
+            return res.json({ error: err.message });
           }
           return res.json({
+            result: result,
             message: "Comment deleted",
           });
         });
