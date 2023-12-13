@@ -405,10 +405,10 @@ exports.create_comment = [
           text: req.body.text,
         })
           .save()
-          .then((data) => {
+          .then((result) => {
             return res.json({
               message: "New comment created",
-              data: data,
+              data: result,
             });
           })
           .catch((err) => {
