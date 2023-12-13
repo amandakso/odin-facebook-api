@@ -399,13 +399,28 @@ exports.create_comment = [
         if (err) {
           return res.json({ error: err.message });
         }
+
+        /**
+         *   try {
+    const { postId } = req.params;
+    const { comment } = req.body;
+    let created = await new Comment({
+      content: comment,
+      postId,
+      postedBy: req.user._id,
+    }).save();
+    created = await created.populate("postedBy", "_id name");
+    res.json(created);
+  } catch (err) {
+    console.log(err);
+         */
         const comment = new Comment({
           postid: req.params.postid,
           author: authData.user._id,
           text: req.body.text,
         })
           .save()
-          .populate("author", "username")
+          .then((result) => result.populate("author", "username"))
           .then((result) => {
             return res.json({
               message: "New comment created",
