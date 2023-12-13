@@ -405,6 +405,7 @@ exports.create_comment = [
           text: req.body.text,
         })
           .save()
+          .populate("author", "username")
           .then((result) => {
             return res.json({
               message: "New comment created",
