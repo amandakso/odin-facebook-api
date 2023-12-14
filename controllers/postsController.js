@@ -400,20 +400,6 @@ exports.create_comment = [
           return res.json({ error: err.message });
         }
 
-        /**
-         *   try {
-    const { postId } = req.params;
-    const { comment } = req.body;
-    let created = await new Comment({
-      content: comment,
-      postId,
-      postedBy: req.user._id,
-    }).save();
-    created = await created.populate("postedBy", "_id name");
-    res.json(created);
-  } catch (err) {
-    console.log(err);
-         */
         const comment = new Comment({
           postid: req.params.postid,
           author: authData.user._id,
@@ -456,19 +442,19 @@ exports.update_comment = [
     let isValid = validateObjectId(req.params.commentid);
     if (!isValid) {
       const error = new Error("Unable to update comment.");
-      return next(error);
+      return res.json({ error: error.message });
     }
     Comment.findById(req.params.commentid)
       .select("author")
       .then((result, err) => {
         if (err) {
-          return next(err);
+          return res.json({ error: err.message });
         }
         if (!result) {
           const error = new Error(
             "Comment not found. Unable to update comment."
           );
-          return next(error);
+          return res.json({ error: error.message });
         }
         // Extract bearer token
         let bearerToken = "";
@@ -478,21 +464,22 @@ exports.update_comment = [
         // Verify Token
         jwt.verify(bearerToken, process.env.jwt_key, (err, authData) => {
           if (err) {
-            return next(err);
+            return res.json({ error: err.message });
           }
           // current user id doesn't match comment author id
           if (authData.user._id !== result.author.toString()) {
             const error = new Error("Not authorized.");
-            return next(error);
+            return res.json({ error: error.message });
           }
 
           Comment.findByIdAndUpdate(req.params.commentid, {
             text: req.body.text,
           }).then((result, err) => {
             if (err) {
-              return next(err);
+              return res.json({ error: err.message });
             }
             return res.json({
+              success: true,
               message: "Comment updated",
               data: result,
             });
