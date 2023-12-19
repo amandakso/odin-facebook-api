@@ -164,17 +164,17 @@ exports.delete_post = (req, res, next) => {
   let isValid = validateObjectId(req.params.postid);
   if (!isValid) {
     const error = new Error("Unable to delete post.");
-    return next(error);
+    return res.json({ error: error.message });
   }
   Post.findById(req.params.postid)
     .select("author")
     .then((result, err) => {
       if (err) {
-        return next(err);
+        return res.json({ error: err.message });
       }
       if (!result) {
         const error = new Error("Post not found. Unable to delete post.");
-        return next(error);
+        return res.json({ error: error.messagae });
       }
       // Extract bearer token
       let bearerToken = "";
@@ -184,21 +184,22 @@ exports.delete_post = (req, res, next) => {
       // Verify Token
       jwt.verify(bearerToken, process.env.jwt_key, (err, authData) => {
         if (err) {
-          return next(err);
+          return res.json({ error: err.message });
         }
         // current user id doesn't match post author id
         if (authData.user._id !== result.author.toString()) {
           const error = new Error("Not authorized.");
-          return next(error);
+          return res.json({ error: error.message });
         }
 
         Post.findByIdAndDelete(req.params.postid).then((result, err) => {
           if (err) {
-            return next(err);
+            return res.json({ error: err.message });
           }
           return res.json({
             message: "Post deleted",
             data: result,
+            success: true,
           });
         });
       });
