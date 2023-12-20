@@ -97,7 +97,7 @@ exports.get_friendship = (req, res, next) => {
     .then((result, err) => {
       try {
         if (err) {
-          return res.json({ status: "none", error: err.message });
+          return res.json({ status: null, error: err.message });
         }
         if (!result) {
           return res.json({ status: "other" });
@@ -105,7 +105,7 @@ exports.get_friendship = (req, res, next) => {
         return res.json({ status: result.status });
       } catch (error) {
         if (error instanceof Error) {
-          return res.json({ status: "none", error: error.message });
+          return res.json({ status: null, error: error.message });
         }
       }
     });
