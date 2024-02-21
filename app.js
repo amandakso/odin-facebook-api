@@ -4,11 +4,14 @@ var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 var cors = require("cors");
+const job = require("./cronJob");
 
 var indexRouter = require("./routes/index");
 var apiRouter = require("./routes/api");
 
 require("dotenv").config();
+
+job.start();
 
 var app = express();
 // CORS
