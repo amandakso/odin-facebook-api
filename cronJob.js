@@ -1,7 +1,7 @@
 const cron = require("cron");
 const https = require("https");
 
-const url = "https://odin-facebook-api.onrender.com/";
+const url = "https://odin-facebook-api.onrender.com/api/";
 
 const job = new cron.CronJob("*/14 * * * *", function () {
   console.log("Waking up server...");
