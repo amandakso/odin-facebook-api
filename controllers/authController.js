@@ -111,16 +111,13 @@ exports.guest_login = async (req, res, next) => {
       const error = new Error("Unable to get guest account. Try again later.");
       return res.json({ error: error.message });
     }
-    req.login(user, { sessiong: false }, async (error) => {
-      if (error) return res.json({ error: error.message });
 
-      const body = { _id: user._id, username: user.username };
-      const token = jwt.sign({ user: body }, process.env.jwt_key, {
-        expiresIn: "1hr",
-      });
-
-      return res.json({ token });
+    const body = { _id: user._id, username: user.username };
+    const token = jwt.sign({ user: body }, process.env.jwt_key, {
+      expiresIn: "1hr",
     });
+
+    return res.json({ token });
   } catch (error) {
     return res.json({ error: error.message });
   }
