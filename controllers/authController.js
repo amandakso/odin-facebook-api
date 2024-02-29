@@ -101,6 +101,31 @@ exports.login = async (req, res, next) => {
     }
   })(req, res, next);
 };
+
+exports.guest_login = async (req, res, next) => {
+  const username = process.env.GUEST_USER;
+  try {
+    const user = await User.findOne({ username });
+
+    if (!user) {
+      const error = new Error("Unable to get guest account. Try again later.");
+      return res.json({ error: error.message });
+    }
+    req.login(user, { sessiong: false }, async (error) => {
+      if (error) return res.json({ error: error.message });
+
+      const body = { _id: user._id, username: user.username };
+      const token = jwt.sign({ user: body }, process.env.jwt_key, {
+        expiresIn: "1hr",
+      });
+
+      return res.json({ token });
+    });
+  } catch (error) {
+    return res.json({ error: error.message });
+  }
+};
+
 exports.logout = (req, res) => {
   const authHeader = req.headers["authorization"];
   jwt.sign(authHeader, "", { expiresIn: 1 }, (logout, err) => {
