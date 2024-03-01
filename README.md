@@ -9,6 +9,7 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 This project was created for the final project of the Odin Project's NodeJS course. This Facebook clone web application was created using a MERN stack.
 
 [Live Demo](https://odin-facebook-client.vercel.app/)
+
 [Client Side Repo](https://github.com/amandakso/odin-facebook-client)
 
 ## Features
